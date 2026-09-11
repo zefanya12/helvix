@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dashboard Laundry Sepatu - Tracking & Upah Pegawai</title>
+  <title>ShoeWash Dual Dashboard - Pegawai & Owner</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
@@ -14,126 +14,251 @@
     }
   </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen pb-16">
+<body class="bg-slate-950 text-slate-100 min-h-screen pb-20">
 
-  <!-- TOP NAVBAR -->
-  <header class="bg-slate-800/80 backdrop-blur border-b border-slate-700 sticky top-0 z-30 px-4 py-3 sm:px-8">
-    <div class="max-w-6xl mx-auto flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white shadow-lg shadow-cyan-500/20">
-          <i class="fa-solid fa-shoe-prints text-lg"></i>
+  <!-- TOP HEADER / NAVBAR -->
+  <header class="bg-slate-900/90 backdrop-blur border-b border-slate-800 sticky top-0 z-30 px-4 py-3 sm:px-8">
+    <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+      
+      <!-- Brand & Mode Indicator -->
+      <div class="flex items-center justify-between w-full sm:w-auto">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white shadow-lg shadow-cyan-500/20">
+            <i class="fa-solid fa-shoe-prints text-lg"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h1 class="font-bold text-lg leading-tight text-white">ShoeWash Pro</h1>
+              <span id="role-pill" class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">Mode Pegawai</span>
+            </div>
+            <p class="text-xs text-slate-400" id="role-subtitle">Upah Anda: Rp15.000 / pasang</p>
+          </div>
         </div>
-        <div>
-          <h1 class="font-bold text-lg leading-tight text-white">ShoeWash Pro</h1>
-          <p class="text-xs text-slate-400">Pegawai: Rp15.000 / Pasang</p>
+
+        <!-- Mobile Actions -->
+        <div class="flex sm:hidden items-center gap-2">
+          <button onclick="openModal()" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs p-2 rounded-lg">
+            <i class="fa-solid fa-plus"></i>
+          </button>
+          <button onclick="fetchDataFromSheet()" class="p-2 rounded-lg bg-slate-800 text-slate-300">
+            <i class="fa-solid fa-rotate text-xs" id="refresh-icon-mob"></i>
+          </button>
         </div>
       </div>
-      <div class="flex items-center gap-2">
-        <button onclick="openModal()" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-semibold text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-lg flex items-center gap-1.5 transition shadow-sm">
-          <i class="fa-solid fa-plus"></i>
-          <span>Input Order</span>
-        </button>
-        <button onclick="fetchDataFromSheet()" title="Sinkronkan Data" class="p-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 transition">
-          <i class="fa-solid fa-rotate text-sm" id="refresh-icon"></i>
-        </button>
+
+      <!-- SWITCHER TAB: PEGAWAI VS OWNER -->
+      <div class="flex items-center justify-between w-full sm:w-auto gap-3">
+        <div class="bg-slate-800/90 p-1 rounded-xl border border-slate-700/80 flex items-center gap-1 w-full sm:w-auto">
+          <button id="btn-tab-worker" onclick="switchDashboard('WORKER')" class="flex-1 sm:flex-initial px-4 py-1.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-2 bg-cyan-500 text-slate-950 shadow">
+            <i class="fa-solid fa-user-gear"></i>
+            <span>Dashboard Pegawai</span>
+          </button>
+          <button id="btn-tab-owner" onclick="switchDashboard('OWNER')" class="flex-1 sm:flex-initial px-4 py-1.5 rounded-lg text-xs font-medium transition flex items-center justify-center gap-2 text-slate-400 hover:text-slate-200">
+            <i class="fa-solid fa-store"></i>
+            <span>Dashboard Owner</span>
+          </button>
+        </div>
+
+        <div class="hidden sm:flex items-center gap-2">
+          <button onclick="openModal()" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-semibold text-xs px-3 py-2 rounded-lg flex items-center gap-1.5 transition shadow">
+            <i class="fa-solid fa-plus"></i>
+            <span>Input Order</span>
+          </button>
+          <button onclick="fetchDataFromSheet()" title="Sinkronkan Data" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 transition">
+            <i class="fa-solid fa-rotate text-xs" id="refresh-icon"></i>
+          </button>
+        </div>
       </div>
+
     </div>
   </header>
 
-  <!-- MAIN CONTAINER -->
   <main class="max-w-6xl mx-auto px-4 sm:px-8 mt-6">
 
-    <!-- KPI STATS CARDS -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
-      <!-- Total Pasang -->
-      <div class="bg-slate-800/90 border border-slate-700/80 rounded-2xl p-4 shadow-sm">
-        <div class="flex items-center justify-between text-slate-400 text-xs font-medium">
-          <span>Total Sepatu</span>
-          <i class="fa-solid fa-boxes-stacked text-cyan-400"></i>
+    <!-- ============================================== -->
+    <!-- VIEW 1: DASHBOARD PEGAWAI (Fokus Kerja & Upah) -->
+    <!-- ============================================== -->
+    <section id="view-worker" class="space-y-6">
+      
+      <!-- Worker KPI Cards -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <!-- Total Sepatu Masuk -->
+        <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-sm">
+          <div class="flex items-center justify-between text-slate-400 text-xs font-medium">
+            <span>Total Sepatu</span>
+            <i class="fa-solid fa-boxes-stacked text-cyan-400"></i>
+          </div>
+          <div class="mt-2 flex items-baseline gap-2">
+            <span class="text-2xl sm:text-3xl font-extrabold text-white" id="w-total-qty">18</span>
+            <span class="text-xs text-slate-400">pasang</span>
+          </div>
+          <p class="text-[11px] text-slate-500 mt-1">Daftar cucian masuk</p>
         </div>
-        <div class="mt-2 flex items-baseline gap-2">
-          <span class="text-2xl sm:text-3xl font-extrabold text-white" id="stat-total-qty">18</span>
-          <span class="text-xs text-slate-400">pasang</span>
+
+        <!-- Sepatu Selesai / Diantar -->
+        <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-sm">
+          <div class="flex items-center justify-between text-slate-400 text-xs font-medium">
+            <span>Selesai & Diantar</span>
+            <i class="fa-solid fa-circle-check text-emerald-400"></i>
+          </div>
+          <div class="mt-2 flex items-baseline gap-2">
+            <span class="text-2xl sm:text-3xl font-extrabold text-emerald-400" id="w-completed-qty">0</span>
+            <span class="text-xs text-slate-400">pasang</span>
+          </div>
+          <p class="text-[11px] text-slate-500 mt-1" id="w-pending-note">18 pasang antrean/proses</p>
+        </div>
+
+        <!-- Potensi Upah Total -->
+        <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-sm">
+          <div class="flex items-center justify-between text-slate-400 text-xs font-medium">
+            <span>Potensi Upah Total</span>
+            <i class="fa-solid fa-coins text-amber-400"></i>
+          </div>
+          <div class="mt-2">
+            <span class="text-xl sm:text-2xl font-extrabold text-amber-300" id="w-wage-potential">Rp270.000</span>
+          </div>
+          <p class="text-[11px] text-slate-500 mt-1">Semua order (Rp15k/psg)</p>
+        </div>
+
+        <!-- Upah Siap Cair (Gaji Terkumpul) -->
+        <div class="bg-gradient-to-br from-cyan-950/60 to-blue-900/40 border border-cyan-500/40 rounded-2xl p-4 shadow-sm">
+          <div class="flex items-center justify-between text-cyan-300 text-xs font-medium">
+            <span>Upah Siap Cair</span>
+            <i class="fa-solid fa-wallet text-cyan-300"></i>
+          </div>
+          <div class="mt-2">
+            <span class="text-xl sm:text-2xl font-extrabold text-cyan-200" id="w-wage-earned">Rp0</span>
+          </div>
+          <p class="text-[11px] text-cyan-300/70 mt-1">Sudah selesai / diantar</p>
         </div>
       </div>
 
-      <!-- Total Diantar / Selesai -->
-      <div class="bg-slate-800/90 border border-slate-700/80 rounded-2xl p-4 shadow-sm">
-        <div class="flex items-center justify-between text-slate-400 text-xs font-medium">
-          <span>Sudah Diantar</span>
-          <i class="fa-solid fa-truck-fast text-emerald-400"></i>
+    </section>
+
+    <!-- ============================================== -->
+    <!-- VIEW 2: DASHBOARD OWNER (Fokus Finansial Toko) -->
+    <!-- ============================================== -->
+    <section id="view-owner" class="hidden space-y-6">
+      
+      <!-- Owner KPI Cards -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <!-- Estimasi Omzet Toko -->
+        <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-sm">
+          <div class="flex items-center justify-between text-slate-400 text-xs font-medium">
+            <span>Total Omzet Toko</span>
+            <i class="fa-solid fa-money-bill-trend-up text-emerald-400"></i>
+          </div>
+          <div class="mt-2">
+            <span class="text-xl sm:text-2xl font-extrabold text-emerald-300" id="o-total-revenue">Rp450.000</span>
+          </div>
+          <p class="text-[11px] text-slate-500 mt-1">Tarif cuci pelanggan (18 psg)</p>
         </div>
-        <div class="mt-2 flex items-baseline gap-2">
-          <span class="text-2xl sm:text-3xl font-extrabold text-emerald-400" id="stat-delivered-qty">0</span>
-          <span class="text-xs text-slate-400">pasang</span>
+
+        <!-- Biaya Upah Pegawai -->
+        <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-sm">
+          <div class="flex items-center justify-between text-slate-400 text-xs font-medium">
+            <span>Beban Upah Pegawai</span>
+            <i class="fa-solid fa-hand-holding-dollar text-amber-400"></i>
+          </div>
+          <div class="mt-2">
+            <span class="text-xl sm:text-2xl font-extrabold text-amber-300" id="o-total-wage-expense">Rp270.000</span>
+          </div>
+          <p class="text-[11px] text-slate-500 mt-1">Rp15.000 × total pasang</p>
+        </div>
+
+        <!-- Estimasi Laba Bersih Toko -->
+        <div class="bg-gradient-to-br from-emerald-950/60 to-teal-900/40 border border-emerald-500/40 rounded-2xl p-4 shadow-sm">
+          <div class="flex items-center justify-between text-emerald-300 text-xs font-medium">
+            <span>Estimasi Profit Toko</span>
+            <i class="fa-solid fa-chart-line text-emerald-300"></i>
+          </div>
+          <div class="mt-2">
+            <span class="text-xl sm:text-2xl font-extrabold text-emerald-200" id="o-net-profit">Rp180.000</span>
+          </div>
+          <p class="text-[11px] text-emerald-300/70 mt-1">Omzet dikurangi upah cuci</p>
+        </div>
+
+        <!-- Kas Belum Tertagih (Unpaid) -->
+        <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-sm">
+          <div class="flex items-center justify-between text-rose-400 text-xs font-medium">
+            <span>Belum Dibayar (Piutang)</span>
+            <i class="fa-solid fa-circle-exclamation text-rose-400"></i>
+          </div>
+          <div class="mt-2">
+            <span class="text-xl sm:text-2xl font-extrabold text-rose-400" id="o-unpaid-amount">Rp25.000</span>
+          </div>
+          <p class="text-[11px] text-slate-500 mt-1" id="o-unpaid-note">1 order belum bayar</p>
         </div>
       </div>
 
-      <!-- Estimasi Upah Total -->
-      <div class="bg-slate-800/90 border border-slate-700/80 rounded-2xl p-4 shadow-sm">
-        <div class="flex items-center justify-between text-slate-400 text-xs font-medium">
-          <span>Potensi Upah</span>
-          <i class="fa-solid fa-coins text-amber-400"></i>
+      <!-- Owner Info Box -->
+      <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-slate-300">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-sm">
+            <i class="fa-solid fa-shield-halved"></i>
+          </div>
+          <div>
+            <div class="font-bold text-white">Ringkasan Finansial Pemilik Laundry</div>
+            <div class="text-slate-400">Memantau laba kotor, kewajiban pembayaran upah cuci, dan tagihan macet pelanggan.</div>
+          </div>
         </div>
-        <div class="mt-2">
-          <span class="text-xl sm:text-2xl font-extrabold text-amber-300" id="stat-wage-potential">Rp270.000</span>
+        <div class="text-slate-400 text-right w-full sm:w-auto">
+          Asumsi Tarif Standar: <span class="text-white font-semibold">Rp25.000 / pasang</span>
         </div>
       </div>
 
-      <!-- Upah Siap Cair (Selesai/Diantar) -->
-      <div class="bg-gradient-to-br from-cyan-900/40 to-blue-900/30 border border-cyan-500/30 rounded-2xl p-4 shadow-sm">
-        <div class="flex items-center justify-between text-cyan-300 text-xs font-medium">
-          <span>Upah Siap Cair</span>
-          <i class="fa-solid fa-wallet text-cyan-300"></i>
+    </section>
+
+    <!-- ============================================== -->
+    <!-- COMMON TABLE: LIST ORDER SEPATU & STATUS        -->
+    <!-- ============================================== -->
+    <div class="mt-6">
+      
+      <!-- Filters & Search -->
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 mb-4">
+        <div class="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
+          <button onclick="filterByStatus('ALL')" class="status-btn active-filter px-3 py-1.5 rounded-xl text-xs font-semibold bg-cyan-500 text-slate-950 transition">Semua</button>
+          <button onclick="filterByStatus('Antrean')" class="status-btn px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-900 text-slate-400 hover:text-slate-200 transition">Antrean</button>
+          <button onclick="filterByStatus('Proses Cuci')" class="status-btn px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-900 text-slate-400 hover:text-slate-200 transition">Proses</button>
+          <button onclick="filterByStatus('Selesai')" class="status-btn px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-900 text-slate-400 hover:text-slate-200 transition">Selesai</button>
+          <button onclick="filterByStatus('Sudah Diantar')" class="status-btn px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-900 text-slate-400 hover:text-slate-200 transition">Diantar</button>
         </div>
-        <div class="mt-2">
-          <span class="text-xl sm:text-2xl font-extrabold text-cyan-200" id="stat-wage-earned">Rp0</span>
+
+        <div class="relative w-full sm:w-64">
+          <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+          <input type="text" id="search-input" onkeyup="handleSearch()" placeholder="Cari pelanggan / ciri..." class="w-full bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-3 py-1.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-400" />
         </div>
       </div>
+
+      <!-- Orders Table -->
+      <div class="bg-slate-900/90 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs sm:text-sm">
+            <thead class="bg-slate-950 text-slate-400 font-semibold border-b border-slate-800 text-[11px] sm:text-xs uppercase tracking-wider">
+              <tr>
+                <th class="py-3.5 px-4">Foto</th>
+                <th class="py-3.5 px-4">Pelanggan / Ciri</th>
+                <th class="py-3.5 px-3 text-center">Jml</th>
+                <th class="py-3.5 px-4">Status Bayar</th>
+                <th class="py-3.5 px-4">Status Cuci</th>
+                <th class="py-3.5 px-4 text-right" id="table-head-value">Upah Pegawai</th>
+                <th class="py-3.5 px-4 text-center">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="orders-tbody" class="divide-y divide-slate-800/80">
+              <!-- Rendered by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
     </div>
 
-    <!-- FILTER & SEARCH BAR -->
-    <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 mb-5">
-      <div class="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
-        <button onclick="filterByStatus('ALL')" class="status-btn active-filter px-3.5 py-1.5 rounded-xl text-xs font-medium bg-cyan-500 text-slate-950 transition">Semua</button>
-        <button onclick="filterByStatus('Antrean')" class="status-btn px-3.5 py-1.5 rounded-xl text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 transition">Antrean</button>
-        <button onclick="filterByStatus('Proses Cuci')" class="status-btn px-3.5 py-1.5 rounded-xl text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 transition">Proses</button>
-        <button onclick="filterByStatus('Selesai')" class="status-btn px-3.5 py-1.5 rounded-xl text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 transition">Selesai</button>
-        <button onclick="filterByStatus('Sudah Diantar')" class="status-btn px-3.5 py-1.5 rounded-xl text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 transition">Diantar</button>
-      </div>
-
-      <div class="relative w-full sm:w-64">
-        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-        <input type="text" id="search-input" onkeyup="handleSearch()" placeholder="Cari nama atau sepatu..." class="w-full bg-slate-800/90 border border-slate-700 rounded-xl pl-9 pr-3 py-1.5 text-xs text-slate-100 placeholder-slate-400 focus:outline-none focus:border-cyan-400" />
-      </div>
-    </div>
-
-    <!-- ORDERS TABLE CONTAINER -->
-    <div class="bg-slate-800/80 border border-slate-700/80 rounded-2xl overflow-hidden shadow-xl">
-      <div class="overflow-x-auto">
-        <table class="w-full text-left text-xs sm:text-sm">
-          <thead class="bg-slate-900/70 text-slate-400 font-semibold border-b border-slate-700 text-[11px] sm:text-xs uppercase tracking-wider">
-            <tr>
-              <th class="py-3.5 px-4">Foto</th>
-              <th class="py-3.5 px-4">Pelanggan / Ciri</th>
-              <th class="py-3.5 px-3 text-center">Jml</th>
-              <th class="py-3.5 px-4">Status Bayar</th>
-              <th class="py-3.5 px-4">Status Cuci</th>
-              <th class="py-3.5 px-4 text-right">Upah (Rp15k)</th>
-              <th class="py-3.5 px-4 text-center">Aksi</th>
-            </tr>
-          </thead>
-          <tbody id="orders-tbody" class="divide-y divide-slate-700/50">
-            <!-- Rendered by JavaScript -->
-          </tbody>
-        </table>
-      </div>
-    </div>
   </main>
 
   <!-- MODAL: TAMBAH ORDER BARU -->
-  <div id="order-modal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden items-center justify-center p-4">
-    <div class="bg-slate-800 border border-slate-700 rounded-2xl w-full max-w-md p-5 sm:p-6 shadow-2xl relative">
+  <div id="order-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-5 sm:p-6 shadow-2xl relative">
       <button onclick="closeModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white">
         <i class="fa-solid fa-xmark text-lg"></i>
       </button>
@@ -142,22 +267,22 @@
         <i class="fa-solid fa-circle-plus text-cyan-400"></i>
         <span>Tambah Order Sepatu</span>
       </h3>
-      <p class="text-xs text-slate-400 mb-4">Input data sepatu dan upload foto kondisi awal.</p>
+      <p class="text-xs text-slate-400 mb-4">Input data sepatu dan foto kondisi fisik.</p>
 
       <form id="order-form" onsubmit="handleFormSubmit(event)" class="space-y-3">
         <div>
           <label class="block text-xs font-medium text-slate-300 mb-1">Nama Pelanggan / Ciri</label>
-          <input type="text" id="input-customer" required placeholder="Contoh: Mbak Prambanan / Tas Merah" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-400" />
+          <input type="text" id="input-customer" required placeholder="Contoh: Mbak Prambanan / Tas Merah" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-400" />
         </div>
 
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="block text-xs font-medium text-slate-300 mb-1">Jumlah (Pasang)</label>
-            <input type="number" id="input-qty" required min="1" value="1" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-cyan-400" />
+            <input type="number" id="input-qty" required min="1" value="1" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-cyan-400" />
           </div>
           <div>
             <label class="block text-xs font-medium text-slate-300 mb-1">Status Bayar</label>
-            <select id="input-payment" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-cyan-400">
+            <select id="input-payment" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-cyan-400">
               <option value="Lunas">Lunas</option>
               <option value="Belum Bayar">Belum Bayar</option>
             </select>
@@ -166,7 +291,7 @@
 
         <div>
           <label class="block text-xs font-medium text-slate-300 mb-1">Status Pengerjaan</label>
-          <select id="input-status" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-cyan-400">
+          <select id="input-status" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-cyan-400">
             <option value="Antrean">Antrean (Masuk)</option>
             <option value="Proses Cuci">Proses Cuci</option>
             <option value="Selesai">Selesai (Siap Ambil)</option>
@@ -176,21 +301,21 @@
 
         <!-- UPLOAD FOTO SEPATU -->
         <div>
-          <label class="block text-xs font-medium text-slate-300 mb-1">Upload Foto Sepatu (Sebelum/Sesudah)</label>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Upload Foto Sepatu</label>
           <div class="flex items-center gap-3">
-            <label class="cursor-pointer flex-1 border border-dashed border-slate-600 hover:border-cyan-400 rounded-xl p-3 text-center transition bg-slate-900/50">
+            <label class="cursor-pointer flex-1 border border-dashed border-slate-700 hover:border-cyan-400 rounded-xl p-3 text-center transition bg-slate-950">
               <i class="fa-solid fa-camera text-slate-400 text-lg mb-1 block"></i>
               <span class="text-xs text-slate-300 block" id="file-label">Pilih atau Jepret Foto</span>
               <input type="file" id="input-photo" accept="image/*" capture="environment" onchange="previewFile()" class="hidden" />
             </label>
-            <div id="preview-box" class="w-16 h-16 rounded-xl border border-slate-700 overflow-hidden hidden bg-slate-900">
+            <div id="preview-box" class="w-16 h-16 rounded-xl border border-slate-700 overflow-hidden hidden bg-slate-950">
               <img id="photo-preview-img" src="" alt="preview" class="w-full h-full object-cover" />
             </div>
           </div>
         </div>
 
         <div class="pt-3 flex gap-2">
-          <button type="button" onclick="closeModal()" class="w-1/2 py-2.5 rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-700 text-xs font-medium">Batal</button>
+          <button type="button" onclick="closeModal()" class="w-1/2 py-2.5 rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-800 text-xs font-medium">Batal</button>
           <button type="submit" id="btn-submit" class="w-1/2 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-bold transition flex items-center justify-center gap-2">
             <span>Simpan Order</span>
           </button>
@@ -201,7 +326,7 @@
 
   <!-- MODAL: PREVIEW FOTO BESAR -->
   <div id="image-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4" onclick="closeImageModal()">
-    <div class="max-w-xl max-h-[85vh] bg-slate-900 p-2 rounded-2xl border border-slate-700 overflow-hidden relative">
+    <div class="max-w-xl max-h-[85vh] bg-slate-900 p-2 rounded-2xl border border-slate-800 overflow-hidden relative">
       <img id="enlarged-img" src="" alt="Foto Sepatu" class="w-full h-auto max-h-[75vh] object-contain rounded-xl" />
       <p id="enlarged-caption" class="text-xs text-center text-slate-300 py-2 font-medium"></p>
     </div>
@@ -209,13 +334,11 @@
 
   <!-- LOGIC SCRIPT -->
   <script>
-    // Konfigurasi Web App URL dari Google Apps Script (Ganti saat sudah deploy Apps Script)
     const APPS_SCRIPT_URL = "GANTI_DENGAN_URL_WEB_APP_APPS_SCRIPT_ANDA";
 
-    // Rate upah pegawai per pasang
-    const RATE_PER_PAIR = 15000;
+    const RATE_WORKER_PER_PAIR = 15000;
+    const RATE_CUSTOMER_PER_PAIR = 25000;
 
-    // Data awal sesuai yang Anda sebutkan
     let initialOrders = [
       { id: "SP01", customer: "Kutai", qty: 1, payment: "Lunas", status: "Antrean", photo: "" },
       { id: "SP02", customer: "Konco e mamahnu", qty: 1, payment: "Belum Bayar", status: "Antrean", photo: "" },
@@ -228,45 +351,80 @@
       { id: "SP09", customer: "Nadia", qty: 5, payment: "Lunas", status: "Antrean", photo: "" }
     ];
 
-    // Load data dari LocalStorage jika ada, atau gunakan initial
     let orders = JSON.parse(localStorage.getItem("shoe_orders")) || initialOrders;
+    let currentRole = "WORKER"; // "WORKER" | "OWNER"
     let currentFilter = "ALL";
     let tempBase64Photo = "";
+
+    function formatRupiah(num) {
+      return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num);
+    }
+
+    function switchDashboard(role) {
+      currentRole = role;
+      const btnWorker = document.getElementById('btn-tab-worker');
+      const btnOwner = document.getElementById('btn-tab-owner');
+      const viewWorker = document.getElementById('view-worker');
+      const viewOwner = document.getElementById('view-owner');
+      const rolePill = document.getElementById('role-pill');
+      const roleSubtitle = document.getElementById('role-subtitle');
+      const tableHeadVal = document.getElementById('table-head-value');
+
+      if (role === 'WORKER') {
+        btnWorker.className = "flex-1 sm:flex-initial px-4 py-1.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-2 bg-cyan-500 text-slate-950 shadow";
+        btnOwner.className = "flex-1 sm:flex-initial px-4 py-1.5 rounded-lg text-xs font-medium transition flex items-center justify-center gap-2 text-slate-400 hover:text-slate-200";
+        viewWorker.classList.remove('hidden');
+        viewOwner.classList.add('hidden');
+        rolePill.innerText = "Mode Pegawai";
+        rolePill.className = "text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-400 border border-cyan-500/30";
+        roleSubtitle.innerText = "Upah Anda: Rp15.000 / pasang";
+        tableHeadVal.innerText = "Upah Pegawai (15k)";
+      } else {
+        btnOwner.className = "flex-1 sm:flex-initial px-4 py-1.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-2 bg-emerald-500 text-slate-950 shadow";
+        btnWorker.className = "flex-1 sm:flex-initial px-4 py-1.5 rounded-lg text-xs font-medium transition flex items-center justify-center gap-2 text-slate-400 hover:text-slate-200";
+        viewOwner.classList.remove('hidden');
+        viewWorker.classList.add('hidden');
+        rolePill.innerText = "Mode Owner";
+        rolePill.className = "text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30";
+        roleSubtitle.innerText = "Finansial Laundry & Profit Toko";
+        tableHeadVal.innerText = "Tarif Pelanggan (25k)";
+      }
+
+      renderOrders();
+      updateAllStats();
+    }
 
     function saveOrders() {
       localStorage.setItem("shoe_orders", JSON.stringify(orders));
       renderOrders();
-      updateStats();
+      updateAllStats();
     }
 
-    function formatRupiah(number) {
-      return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(number);
-    }
-
-    function updateStats() {
+    function updateAllStats() {
       const totalQty = orders.reduce((acc, curr) => acc + Number(curr.qty), 0);
-      const deliveredQty = orders.filter(o => o.status === 'Sudah Diantar').reduce((acc, curr) => acc + Number(curr.qty), 0);
       const completedQty = orders.filter(o => o.status === 'Selesai' || o.status === 'Sudah Diantar').reduce((acc, curr) => acc + Number(curr.qty), 0);
+      const pendingQty = totalQty - completedQty;
 
-      document.getElementById('stat-total-qty').innerText = totalQty;
-      document.getElementById('stat-delivered-qty').innerText = deliveredQty;
-      document.getElementById('stat-wage-potential').innerText = formatRupiah(totalQty * RATE_PER_PAIR);
-      document.getElementById('stat-wage-earned').innerText = formatRupiah(completedQty * RATE_PER_PAIR);
-    }
+      // WORKER STATS
+      document.getElementById('w-total-qty').innerText = totalQty;
+      document.getElementById('w-completed-qty').innerText = completedQty;
+      document.getElementById('w-pending-note').innerText = `${pendingQty} pasang antrean/proses`;
+      document.getElementById('w-wage-potential').innerText = formatRupiah(totalQty * RATE_WORKER_PER_PAIR);
+      document.getElementById('w-wage-earned').innerText = formatRupiah(completedQty * RATE_WORKER_PER_PAIR);
 
-    function getStatusBadge(status) {
-      switch(status) {
-        case 'Antrean':
-          return `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20"><i class="fa-solid fa-clock text-[10px]"></i> Antrean</span>`;
-        case 'Proses Cuci':
-          return `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20"><i class="fa-solid fa-soap text-[10px]"></i> Proses Cuci</span>`;
-        case 'Selesai':
-          return `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"><i class="fa-solid fa-circle-check text-[10px]"></i> Selesai</span>`;
-        case 'Sudah Diantar':
-          return `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-purple-500/10 text-purple-300 border border-purple-500/20"><i class="fa-solid fa-truck text-[10px]"></i> Sudah Diantar</span>`;
-        default:
-          return status;
-      }
+      // OWNER STATS
+      const totalRevenue = totalQty * RATE_CUSTOMER_PER_PAIR;
+      const totalWageExpense = totalQty * RATE_WORKER_PER_PAIR;
+      const netProfit = totalRevenue - totalWageExpense;
+
+      const unpaidOrders = orders.filter(o => o.payment === 'Belum Bayar');
+      const unpaidAmount = unpaidOrders.reduce((acc, curr) => acc + (Number(curr.qty) * RATE_CUSTOMER_PER_PAIR), 0);
+
+      document.getElementById('o-total-revenue').innerText = formatRupiah(totalRevenue);
+      document.getElementById('o-total-wage-expense').innerText = formatRupiah(totalWageExpense);
+      document.getElementById('o-net-profit').innerText = formatRupiah(netProfit);
+      document.getElementById('o-unpaid-amount').innerText = formatRupiah(unpaidAmount);
+      document.getElementById('o-unpaid-note').innerText = `${unpaidOrders.length} order belum bayar`;
     }
 
     function renderOrders(dataToRender = null) {
@@ -279,45 +437,62 @@
       tbody.innerHTML = '';
 
       if (list.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-500 text-xs">Tidak ada data pesanan ditemukan.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-500 text-xs">Tidak ada data order ditemukan.</td></tr>`;
         return;
       }
 
       list.forEach((order, index) => {
         const tr = document.createElement('tr');
-        tr.className = "hover:bg-slate-800/40 transition-colors";
+        tr.className = "hover:bg-slate-900/40 transition-colors";
 
-        const wage = Number(order.qty) * RATE_PER_PAIR;
         const isPaid = order.payment === 'Lunas';
         const paymentBadge = isPaid 
-          ? `<span class="text-xs font-medium text-emerald-400 flex items-center gap-1"><i class="fa-solid fa-check"></i> Lunas</span>`
+          ? `<span class="text-xs font-semibold text-emerald-400 flex items-center gap-1"><i class="fa-solid fa-check"></i> Lunas</span>`
           : `<span class="text-xs font-bold text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/30 flex items-center gap-1 w-fit"><i class="fa-solid fa-triangle-exclamation"></i> Belum Bayar</span>`;
 
         const photoHtml = order.photo 
-          ? `<img src="${order.photo}" onclick="showImage('${order.photo}', '${order.customer}')" class="w-10 h-10 rounded-lg object-cover cursor-pointer border border-slate-600 hover:scale-105 transition" />`
-          : `<div class="w-10 h-10 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-600 text-xs"><i class="fa-solid fa-camera"></i></div>`;
+          ? `<img src="${order.photo}" onclick="showImage('${order.photo}', '${order.customer}')" class="w-10 h-10 rounded-lg object-cover cursor-pointer border border-slate-700 hover:scale-105 transition" />`
+          : `<div class="w-10 h-10 rounded-lg bg-slate-950 border border-slate-800 flex items-center justify-center text-slate-600 text-xs"><i class="fa-solid fa-camera"></i></div>`;
+
+        // Kolom nominal berganti sesuai mode aktif
+        let valueDisplay = "";
+        if (currentRole === 'WORKER') {
+          const workerWage = Number(order.qty) * RATE_WORKER_PER_PAIR;
+          const isDone = order.status === 'Selesai' || order.status === 'Sudah Diantar';
+          valueDisplay = `<span class="font-semibold ${isDone ? 'text-cyan-400' : 'text-slate-400'}">${formatRupiah(workerWage)}</span>`;
+        } else {
+          const custPrice = Number(order.qty) * RATE_CUSTOMER_PER_PAIR;
+          valueDisplay = `<span class="font-semibold text-emerald-400">${formatRupiah(custPrice)}</span>`;
+        }
 
         tr.innerHTML = `
           <td class="py-3 px-4">${photoHtml}</td>
           <td class="py-3 px-4">
             <div class="font-bold text-slate-100">${order.customer}</div>
-            <div class="text-[11px] text-slate-400 font-mono">${order.id || 'SP0' + (index+1)}</div>
+            <div class="text-[11px] text-slate-500 font-mono">${order.id || 'SP0' + (index+1)}</div>
           </td>
           <td class="py-3 px-3 text-center font-bold text-slate-200">${order.qty}</td>
-          <td class="py-3 px-4">${paymentBadge}</td>
           <td class="py-3 px-4">
-            <select onchange="updateStatus('${order.id}', this.value)" class="bg-slate-900 border border-slate-700 rounded-lg text-xs py-1.5 px-2 text-slate-200 focus:outline-none focus:border-cyan-400 cursor-pointer">
+            ${currentRole === 'OWNER' ? `
+              <select onchange="updatePayment('${order.id}', this.value)" class="bg-slate-950 border border-slate-800 rounded-lg text-xs py-1 px-2 text-slate-200 focus:outline-none cursor-pointer">
+                <option value="Lunas" ${isPaid ? 'selected' : ''}>Lunas</option>
+                <option value="Belum Bayar" ${!isPaid ? 'selected' : ''}>Belum Bayar</option>
+              </select>
+            ` : paymentBadge}
+          </td>
+          <td class="py-3 px-4">
+            <select onchange="updateStatus('${order.id}', this.value)" class="bg-slate-950 border border-slate-800 rounded-lg text-xs py-1.5 px-2 text-slate-200 focus:outline-none focus:border-cyan-400 cursor-pointer">
               <option value="Antrean" ${order.status === 'Antrean' ? 'selected' : ''}>Antrean</option>
               <option value="Proses Cuci" ${order.status === 'Proses Cuci' ? 'selected' : ''}>Proses Cuci</option>
               <option value="Selesai" ${order.status === 'Selesai' ? 'selected' : ''}>Selesai</option>
               <option value="Sudah Diantar" ${order.status === 'Sudah Diantar' ? 'selected' : ''}>Sudah Diantar</option>
             </select>
           </td>
-          <td class="py-3 px-4 text-right font-semibold ${order.status === 'Selesai' || order.status === 'Sudah Diantar' ? 'text-emerald-400' : 'text-slate-400'}">
-            ${formatRupiah(wage)}
+          <td class="py-3 px-4 text-right">
+            ${valueDisplay}
           </td>
           <td class="py-3 px-4 text-center">
-            <button onclick="deleteOrder('${order.id}')" title="Hapus Order" class="text-slate-500 hover:text-rose-400 p-1 transition">
+            <button onclick="deleteOrder('${order.id}')" title="Hapus Order" class="text-slate-600 hover:text-rose-400 p-1 transition">
               <i class="fa-regular fa-trash-can"></i>
             </button>
           </td>
@@ -335,8 +510,17 @@
       }
     }
 
+    function updatePayment(id, newPayment) {
+      const item = orders.find(o => o.id === id);
+      if (item) {
+        item.payment = newPayment;
+        saveOrders();
+        syncToGoogleSheets(item);
+      }
+    }
+
     function deleteOrder(id) {
-      if (confirm('Yakin ingin menghapus data ini?')) {
+      if (confirm('Yakin ingin menghapus order ini?')) {
         orders = orders.filter(o => o.id !== id);
         saveOrders();
       }
@@ -345,11 +529,11 @@
     function filterByStatus(status) {
       currentFilter = status;
       document.querySelectorAll('.status-btn').forEach(btn => {
-        btn.classList.remove('bg-cyan-500', 'text-slate-950');
-        btn.classList.add('bg-slate-800', 'text-slate-300');
+        btn.classList.remove('bg-cyan-500', 'text-slate-950', 'font-semibold');
+        btn.classList.add('bg-slate-900', 'text-slate-400');
       });
-      event.target.classList.remove('bg-slate-800', 'text-slate-300');
-      event.target.classList.add('bg-cyan-500', 'text-slate-950');
+      event.target.classList.remove('bg-slate-900', 'text-slate-400');
+      event.target.classList.add('bg-cyan-500', 'text-slate-950', 'font-semibold');
       renderOrders();
     }
 
@@ -359,7 +543,7 @@
       renderOrders(filtered);
     }
 
-    // Modal helpers
+    // Modal Helpers
     function openModal() {
       document.getElementById('order-modal').classList.remove('hidden');
       document.getElementById('order-modal').classList.add('flex');
@@ -417,7 +601,6 @@
       syncToGoogleSheets(newOrder);
     }
 
-    // Integrasi Google Apps Script (Sheets)
     async function syncToGoogleSheets(orderData) {
       if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.includes("GANTI_DENGAN")) return;
       try {
@@ -428,18 +611,22 @@
           body: JSON.stringify(orderData)
         });
       } catch (err) {
-        console.error("Gagal sinkron ke Sheets:", err);
+        console.error("Gagal sinkron:", err);
       }
     }
 
     async function fetchDataFromSheet() {
-      const icon = document.getElementById('refresh-icon');
-      icon.classList.add('fa-spin');
+      const icon1 = document.getElementById('refresh-icon');
+      const icon2 = document.getElementById('refresh-icon-mob');
+      if (icon1) icon1.classList.add('fa-spin');
+      if (icon2) icon2.classList.add('fa-spin');
+
       if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.includes("GANTI_DENGAN")) {
         setTimeout(() => {
-          icon.classList.remove('fa-spin');
-          alert('Mode Lokal aktif. Data tersimpan di memori browser (LocalStorage). Untuk koneksi realtime ke Google Sheets, masukkan URL Apps Script Anda di file HTML.');
-        }, 600);
+          if (icon1) icon1.classList.remove('fa-spin');
+          if (icon2) icon2.classList.remove('fa-spin');
+          alert('Mode Offline aktif (tersimpan di browser). Masukkan URL Apps Script Anda untuk sinkronisasi cloud.');
+        }, 500);
         return;
       }
       try {
@@ -450,13 +637,14 @@
           saveOrders();
         }
       } catch (err) {
-        console.error("Gagal ambil data:", err);
+        console.error("Gagal fetch:", err);
       } finally {
-        icon.classList.remove('fa-spin');
+        if (icon1) icon1.classList.remove('fa-spin');
+        if (icon2) icon2.classList.remove('fa-spin');
       }
     }
 
-    // Inisialisasi
+    // Init
     saveOrders();
   </script>
 </body>
