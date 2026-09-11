@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard Laundry Sepatu - Tracking & Upah Pegawai</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen pb-16">
+
+  <!-- TOP NAVBAR -->
+  <header class="bg-slate-800/80 backdrop-blur border-b border-slate-700 sticky top-0 z-30 px-4 py-3 sm:px-8">
+    <div class="max-w-6xl mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white shadow-lg shadow-cyan-500/20">
+          <i class="fa-solid fa-shoe-prints text-lg"></i>
+        </div>
+        <div>
+          <h1 class="font-bold text-lg leading-tight text-white">ShoeWash Pro</h1>
+          <p class="text-xs text-slate-400">Pegawai: Rp15.000 / Pasang</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button onclick="openModal()" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-semibold text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-lg flex items-center gap-1.5 transition shadow-sm">
+          <i class="fa-solid fa-plus"></i>
+          <span>Input Order</span>
+        </button>
+        <button onclick="fetchDataFromSheet()" title="Sinkronkan Data" class="p-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 transition">
+          <i class="fa-solid fa-rotate text-sm" id="refresh-icon"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="max-w-6xl mx-auto px-4 sm:px-8 mt-6">
+
+    <!-- KPI STATS CARDS -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
+      <!-- Total Pasang -->
+      <div class="bg-slate-800/90 border border-slate-700/80 rounded-2xl p-4 shadow-sm">
+        <div class="flex items-center justify-between text-slate-400 text-xs font-medium">
+          <span>Total Sepatu</span>
+          <i class="fa-solid fa-boxes-stacked text-cyan-400"></i>
+        </div>
+        <div class="mt-2 flex items-baseline gap-2">
+          <span class="text-2xl sm:text-3xl font-extrabold text-white" id="stat-total-qty">18</span>
+          <span class="text-xs text-slate-400">pasang</span>
+        </div>
+      </div>
+
+      <!-- Total Diantar / Selesai -->
+      <div class="bg-slate-800/90 border border-slate-700/80 rounded-2xl p-4 shadow-sm">
+        <div class="flex items-center justify-between text-slate-400 text-xs font-medium">
+          <span>Sudah Diantar</span>
+          <i class="fa-solid fa-truck-fast text-emerald-400"></i>
+        </div>
+        <div class="mt-2 flex items-baseline gap-2">
+          <span class="text-2xl sm:text-3xl font-extrabold text-emerald-400" id="stat-delivered-qty">0</span>
+          <span class="text-xs text-slate-400">pasang</span>
+        </div>
+      </div>
+
+      <!-- Estimasi Upah Total -->
+      <div class="bg-slate-800/90 border border-slate-700/80 rounded-2xl p-4 shadow-sm">
+        <div class="flex items-center justify-between text-slate-400 text-xs font-medium">
+          <span>Potensi Upah</span>
+          <i class="fa-solid fa-coins text-amber-400"></i>
+        </div>
+        <div class="mt-2">
+          <span class="text-xl sm:text-2xl font-extrabold text-amber-300" id="stat-wage-potential">Rp270.000</span>
+        </div>
+      </div>
+
+      <!-- Upah Siap Cair (Selesai/Diantar) -->
+      <div class="bg-gradient-to-br from-cyan-900/40 to-blue-900/30 border border-cyan-500/30 rounded-2xl p-4 shadow-sm">
+        <div class="flex items-center justify-between text-cyan-300 text-xs font-medium">
+          <span>Upah Siap Cair</span>
+          <i class="fa-solid fa-wallet text-cyan-300"></i>
+        </div>
+        <div class="mt-2">
+          <span class="text-xl sm:text-2xl font-extrabold text-cyan-200" id="stat-wage-earned">Rp0</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- FILTER & SEARCH BAR -->
+    <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 mb-5">
+      <div class="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
+        <button onclick="filterByStatus('ALL')" class="status-btn active-filter px-3.5 py-1.5 rounded-xl text-xs font-medium bg-cyan-500 text-slate-950 transition">Semua</button>
+        <button onclick="filterByStatus('Antrean')" class="status-btn px-3.5 py-1.5 rounded-xl text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 transition">Antrean</button>
+        <button onclick="filterByStatus('Proses Cuci')" class="status-btn px-3.5 py-1.5 rounded-xl text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 transition">Proses</button>
+        <button onclick="filterByStatus('Selesai')" class="status-btn px-3.5 py-1.5 rounded-xl text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 transition">Selesai</button>
+        <button onclick="filterByStatus('Sudah Diantar')" class="status-btn px-3.5 py-1.5 rounded-xl text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 transition">Diantar</button>
+      </div>
+
+      <div class="relative w-full sm:w-64">
+        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+        <input type="text" id="search-input" onkeyup="handleSearch()" placeholder="Cari nama atau sepatu..." class="w-full bg-slate-800/90 border border-slate-700 rounded-xl pl-9 pr-3 py-1.5 text-xs text-slate-100 placeholder-slate-400 focus:outline-none focus:border-cyan-400" />
+      </div>
+    </div>
+
+    <!-- ORDERS TABLE CONTAINER -->
+    <div class="bg-slate-800/80 border border-slate-700/80 rounded-2xl overflow-hidden shadow-xl">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs sm:text-sm">
+          <thead class="bg-slate-900/70 text-slate-400 font-semibold border-b border-slate-700 text-[11px] sm:text-xs uppercase tracking-wider">
+            <tr>
+              <th class="py-3.5 px-4">Foto</th>
+              <th class="py-3.5 px-4">Pelanggan / Ciri</th>
+              <th class="py-3.5 px-3 text-center">Jml</th>
+              <th class="py-3.5 px-4">Status Bayar</th>
+              <th class="py-3.5 px-4">Status Cuci</th>
+              <th class="py-3.5 px-4 text-right">Upah (Rp15k)</th>
+              <th class="py-3.5 px-4 text-center">Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="orders-tbody" class="divide-y divide-slate-700/50">
+            <!-- Rendered by JavaScript -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <!-- MODAL: TAMBAH ORDER BARU -->
+  <div id="order-modal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-slate-800 border border-slate-700 rounded-2xl w-full max-w-md p-5 sm:p-6 shadow-2xl relative">
+      <button onclick="closeModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+
+      <h3 class="text-base sm:text-lg font-bold text-white mb-1 flex items-center gap-2">
+        <i class="fa-solid fa-circle-plus text-cyan-400"></i>
+        <span>Tambah Order Sepatu</span>
+      </h3>
+      <p class="text-xs text-slate-400 mb-4">Input data sepatu dan upload foto kondisi awal.</p>
+
+      <form id="order-form" onsubmit="handleFormSubmit(event)" class="space-y-3">
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Nama Pelanggan / Ciri</label>
+          <input type="text" id="input-customer" required placeholder="Contoh: Mbak Prambanan / Tas Merah" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-400" />
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">Jumlah (Pasang)</label>
+            <input type="number" id="input-qty" required min="1" value="1" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-cyan-400" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">Status Bayar</label>
+            <select id="input-payment" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-cyan-400">
+              <option value="Lunas">Lunas</option>
+              <option value="Belum Bayar">Belum Bayar</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Status Pengerjaan</label>
+          <select id="input-status" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-cyan-400">
+            <option value="Antrean">Antrean (Masuk)</option>
+            <option value="Proses Cuci">Proses Cuci</option>
+            <option value="Selesai">Selesai (Siap Ambil)</option>
+            <option value="Sudah Diantar">Sudah Diantar</option>
+          </select>
+        </div>
+
+        <!-- UPLOAD FOTO SEPATU -->
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Upload Foto Sepatu (Sebelum/Sesudah)</label>
+          <div class="flex items-center gap-3">
+            <label class="cursor-pointer flex-1 border border-dashed border-slate-600 hover:border-cyan-400 rounded-xl p-3 text-center transition bg-slate-900/50">
+              <i class="fa-solid fa-camera text-slate-400 text-lg mb-1 block"></i>
+              <span class="text-xs text-slate-300 block" id="file-label">Pilih atau Jepret Foto</span>
+              <input type="file" id="input-photo" accept="image/*" capture="environment" onchange="previewFile()" class="hidden" />
+            </label>
+            <div id="preview-box" class="w-16 h-16 rounded-xl border border-slate-700 overflow-hidden hidden bg-slate-900">
+              <img id="photo-preview-img" src="" alt="preview" class="w-full h-full object-cover" />
+            </div>
+          </div>
+        </div>
+
+        <div class="pt-3 flex gap-2">
+          <button type="button" onclick="closeModal()" class="w-1/2 py-2.5 rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-700 text-xs font-medium">Batal</button>
+          <button type="submit" id="btn-submit" class="w-1/2 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-bold transition flex items-center justify-center gap-2">
+            <span>Simpan Order</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: PREVIEW FOTO BESAR -->
+  <div id="image-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4" onclick="closeImageModal()">
+    <div class="max-w-xl max-h-[85vh] bg-slate-900 p-2 rounded-2xl border border-slate-700 overflow-hidden relative">
+      <img id="enlarged-img" src="" alt="Foto Sepatu" class="w-full h-auto max-h-[75vh] object-contain rounded-xl" />
+      <p id="enlarged-caption" class="text-xs text-center text-slate-300 py-2 font-medium"></p>
+    </div>
+  </div>
+
+  <!-- LOGIC SCRIPT -->
+  <script>
+    // Konfigurasi Web App URL dari Google Apps Script (Ganti saat sudah deploy Apps Script)
+    const APPS_SCRIPT_URL = "GANTI_DENGAN_URL_WEB_APP_APPS_SCRIPT_ANDA";
+
+    // Rate upah pegawai per pasang
+    const RATE_PER_PAIR = 15000;
+
+    // Data awal sesuai yang Anda sebutkan
+    let initialOrders = [
+      { id: "SP01", customer: "Kutai", qty: 1, payment: "Lunas", status: "Antrean", photo: "" },
+      { id: "SP02", customer: "Konco e mamahnu", qty: 1, payment: "Belum Bayar", status: "Antrean", photo: "" },
+      { id: "SP03", customer: "Tas merah", qty: 1, payment: "Lunas", status: "Antrean", photo: "" },
+      { id: "SP04", customer: "Diadora", qty: 1, payment: "Lunas", status: "Antrean", photo: "" },
+      { id: "SP05", customer: "Koe", qty: 1, payment: "Lunas", status: "Antrean", photo: "" },
+      { id: "SP06", customer: "Mas ayang", qty: 1, payment: "Lunas", status: "Antrean", photo: "" },
+      { id: "SP07", customer: "Boloku", qty: 2, payment: "Lunas", status: "Antrean", photo: "" },
+      { id: "SP08", customer: "Mbak Prambanan", qty: 5, payment: "Lunas", status: "Antrean", photo: "" },
+      { id: "SP09", customer: "Nadia", qty: 5, payment: "Lunas", status: "Antrean", photo: "" }
+    ];
+
+    // Load data dari LocalStorage jika ada, atau gunakan initial
+    let orders = JSON.parse(localStorage.getItem("shoe_orders")) || initialOrders;
+    let currentFilter = "ALL";
+    let tempBase64Photo = "";
+
+    function saveOrders() {
+      localStorage.setItem("shoe_orders", JSON.stringify(orders));
+      renderOrders();
+      updateStats();
+    }
+
+    function formatRupiah(number) {
+      return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(number);
+    }
+
+    function updateStats() {
+      const totalQty = orders.reduce((acc, curr) => acc + Number(curr.qty), 0);
+      const deliveredQty = orders.filter(o => o.status === 'Sudah Diantar').reduce((acc, curr) => acc + Number(curr.qty), 0);
+      const completedQty = orders.filter(o => o.status === 'Selesai' || o.status === 'Sudah Diantar').reduce((acc, curr) => acc + Number(curr.qty), 0);
+
+      document.getElementById('stat-total-qty').innerText = totalQty;
+      document.getElementById('stat-delivered-qty').innerText = deliveredQty;
+      document.getElementById('stat-wage-potential').innerText = formatRupiah(totalQty * RATE_PER_PAIR);
+      document.getElementById('stat-wage-earned').innerText = formatRupiah(completedQty * RATE_PER_PAIR);
+    }
+
+    function getStatusBadge(status) {
+      switch(status) {
+        case 'Antrean':
+          return `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20"><i class="fa-solid fa-clock text-[10px]"></i> Antrean</span>`;
+        case 'Proses Cuci':
+          return `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20"><i class="fa-solid fa-soap text-[10px]"></i> Proses Cuci</span>`;
+        case 'Selesai':
+          return `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"><i class="fa-solid fa-circle-check text-[10px]"></i> Selesai</span>`;
+        case 'Sudah Diantar':
+          return `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-purple-500/10 text-purple-300 border border-purple-500/20"><i class="fa-solid fa-truck text-[10px]"></i> Sudah Diantar</span>`;
+        default:
+          return status;
+      }
+    }
+
+    function renderOrders(dataToRender = null) {
+      const list = dataToRender || orders.filter(item => {
+        if (currentFilter === 'ALL') return true;
+        return item.status === currentFilter;
+      });
+
+      const tbody = document.getElementById('orders-tbody');
+      tbody.innerHTML = '';
+
+      if (list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-500 text-xs">Tidak ada data pesanan ditemukan.</td></tr>`;
+        return;
+      }
+
+      list.forEach((order, index) => {
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-800/40 transition-colors";
+
+        const wage = Number(order.qty) * RATE_PER_PAIR;
+        const isPaid = order.payment === 'Lunas';
+        const paymentBadge = isPaid 
+          ? `<span class="text-xs font-medium text-emerald-400 flex items-center gap-1"><i class="fa-solid fa-check"></i> Lunas</span>`
+          : `<span class="text-xs font-bold text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/30 flex items-center gap-1 w-fit"><i class="fa-solid fa-triangle-exclamation"></i> Belum Bayar</span>`;
+
+        const photoHtml = order.photo 
+          ? `<img src="${order.photo}" onclick="showImage('${order.photo}', '${order.customer}')" class="w-10 h-10 rounded-lg object-cover cursor-pointer border border-slate-600 hover:scale-105 transition" />`
+          : `<div class="w-10 h-10 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-600 text-xs"><i class="fa-solid fa-camera"></i></div>`;
+
+        tr.innerHTML = `
+          <td class="py-3 px-4">${photoHtml}</td>
+          <td class="py-3 px-4">
+            <div class="font-bold text-slate-100">${order.customer}</div>
+            <div class="text-[11px] text-slate-400 font-mono">${order.id || 'SP0' + (index+1)}</div>
+          </td>
+          <td class="py-3 px-3 text-center font-bold text-slate-200">${order.qty}</td>
+          <td class="py-3 px-4">${paymentBadge}</td>
+          <td class="py-3 px-4">
+            <select onchange="updateStatus('${order.id}', this.value)" class="bg-slate-900 border border-slate-700 rounded-lg text-xs py-1.5 px-2 text-slate-200 focus:outline-none focus:border-cyan-400 cursor-pointer">
+              <option value="Antrean" ${order.status === 'Antrean' ? 'selected' : ''}>Antrean</option>
+              <option value="Proses Cuci" ${order.status === 'Proses Cuci' ? 'selected' : ''}>Proses Cuci</option>
+              <option value="Selesai" ${order.status === 'Selesai' ? 'selected' : ''}>Selesai</option>
+              <option value="Sudah Diantar" ${order.status === 'Sudah Diantar' ? 'selected' : ''}>Sudah Diantar</option>
+            </select>
+          </td>
+          <td class="py-3 px-4 text-right font-semibold ${order.status === 'Selesai' || order.status === 'Sudah Diantar' ? 'text-emerald-400' : 'text-slate-400'}">
+            ${formatRupiah(wage)}
+          </td>
+          <td class="py-3 px-4 text-center">
+            <button onclick="deleteOrder('${order.id}')" title="Hapus Order" class="text-slate-500 hover:text-rose-400 p-1 transition">
+              <i class="fa-regular fa-trash-can"></i>
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function updateStatus(id, newStatus) {
+      const item = orders.find(o => o.id === id);
+      if (item) {
+        item.status = newStatus;
+        saveOrders();
+        syncToGoogleSheets(item);
+      }
+    }
+
+    function deleteOrder(id) {
+      if (confirm('Yakin ingin menghapus data ini?')) {
+        orders = orders.filter(o => o.id !== id);
+        saveOrders();
+      }
+    }
+
+    function filterByStatus(status) {
+      currentFilter = status;
+      document.querySelectorAll('.status-btn').forEach(btn => {
+        btn.classList.remove('bg-cyan-500', 'text-slate-950');
+        btn.classList.add('bg-slate-800', 'text-slate-300');
+      });
+      event.target.classList.remove('bg-slate-800', 'text-slate-300');
+      event.target.classList.add('bg-cyan-500', 'text-slate-950');
+      renderOrders();
+    }
+
+    function handleSearch() {
+      const q = document.getElementById('search-input').value.toLowerCase();
+      const filtered = orders.filter(o => o.customer.toLowerCase().includes(q));
+      renderOrders(filtered);
+    }
+
+    // Modal helpers
+    function openModal() {
+      document.getElementById('order-modal').classList.remove('hidden');
+      document.getElementById('order-modal').classList.add('flex');
+    }
+
+    function closeModal() {
+      document.getElementById('order-modal').classList.add('hidden');
+      document.getElementById('order-modal').classList.remove('flex');
+      document.getElementById('order-form').reset();
+      document.getElementById('preview-box').classList.add('hidden');
+      document.getElementById('file-label').innerText = "Pilih atau Jepret Foto";
+      tempBase64Photo = "";
+    }
+
+    function showImage(src, caption) {
+      document.getElementById('enlarged-img').src = src;
+      document.getElementById('enlarged-caption').innerText = "Foto Sepatu: " + caption;
+      document.getElementById('image-modal').classList.remove('hidden');
+      document.getElementById('image-modal').classList.add('flex');
+    }
+
+    function closeImageModal() {
+      document.getElementById('image-modal').classList.add('hidden');
+      document.getElementById('image-modal').classList.remove('flex');
+    }
+
+    function previewFile() {
+      const file = document.getElementById('input-photo').files[0];
+      if (!file) return;
+
+      document.getElementById('file-label').innerText = file.name;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        tempBase64Photo = e.target.result;
+        document.getElementById('photo-preview-img').src = tempBase64Photo;
+        document.getElementById('preview-box').classList.remove('hidden');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function handleFormSubmit(e) {
+      e.preventDefault();
+      const newOrder = {
+        id: "SP" + String(orders.length + 1).padStart(2, '0'),
+        customer: document.getElementById('input-customer').value,
+        qty: parseInt(document.getElementById('input-qty').value) || 1,
+        payment: document.getElementById('input-payment').value,
+        status: document.getElementById('input-status').value,
+        photo: tempBase64Photo
+      };
+
+      orders.unshift(newOrder);
+      saveOrders();
+      closeModal();
+      syncToGoogleSheets(newOrder);
+    }
+
+    // Integrasi Google Apps Script (Sheets)
+    async function syncToGoogleSheets(orderData) {
+      if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.includes("GANTI_DENGAN")) return;
+      try {
+        await fetch(APPS_SCRIPT_URL, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(orderData)
+        });
+      } catch (err) {
+        console.error("Gagal sinkron ke Sheets:", err);
+      }
+    }
+
+    async function fetchDataFromSheet() {
+      const icon = document.getElementById('refresh-icon');
+      icon.classList.add('fa-spin');
+      if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.includes("GANTI_DENGAN")) {
+        setTimeout(() => {
+          icon.classList.remove('fa-spin');
+          alert('Mode Lokal aktif. Data tersimpan di memori browser (LocalStorage). Untuk koneksi realtime ke Google Sheets, masukkan URL Apps Script Anda di file HTML.');
+        }, 600);
+        return;
+      }
+      try {
+        const res = await fetch(APPS_SCRIPT_URL);
+        const data = await res.json();
+        if (data && Array.isArray(data)) {
+          orders = data;
+          saveOrders();
+        }
+      } catch (err) {
+        console.error("Gagal ambil data:", err);
+      } finally {
+        icon.classList.remove('fa-spin');
+      }
+    }
+
+    // Inisialisasi
+    saveOrders();
+  </script>
+</body>
+</html>
